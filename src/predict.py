@@ -70,7 +70,10 @@ class Predictor:
         # Load Model
         # ----------------------------
  
-        model = load_model(self.model_path)
+        model = load_model(
+        str(self.model_path),
+        compile=False
+        )
  
         print("\nModel Loaded Successfully.")
  
