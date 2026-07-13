@@ -2,255 +2,158 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-
+ 
 from src.data_loader import DataLoader
 from src.forecast import Forecaster
 from src.evaluate import Evaluator
-
+ 
 # ------------------------------------------------
-# Page Configuration
+# Page Configuration & Custom CSS
 # ------------------------------------------------
-
+ 
 st.set_page_config(
     page_title="Airline Passenger Forecaster",
-    
+    page_icon="✈️",
     layout="wide"
 )
-
-# ------------------------------------------------
-# Custom CSS
-# ------------------------------------------------
-
+ 
+# Custom CSS for a polished look
 st.markdown("""
 <style>
 
-/* Main Background */
-.main {
-    background-color: #0e1117;
+div[data-testid="stMetric"]{
+    background-color:white;
+    padding:20px;
+    border-radius:15px;
+    border:2px solid #D6EAF8;
+    box-shadow:0px 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Metric Cards */
-[data-testid="stMetric"] {
-    background-color: #1f2937;
-    padding: 18px;
-    border-radius: 12px;
-    border: 1px solid #374151;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+div[data-testid="stMetric"] label{
+    color:#2C3E50 !important;
+    font-weight:bold;
 }
 
-/* Metric Label */
-[data-testid="stMetricLabel"] {
-    color: #d1d5db !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-}
-
-/* Metric Value */
-[data-testid="stMetricValue"] {
-    color: #ffffff !important;
-    font-size: 34px !important;
-    font-weight: bold !important;
-}
-
-/* Metric Delta */
-[data-testid="stMetricDelta"] {
-    color: #22c55e !important;
-}
-
-/* Buttons */
-div.stButton > button {
-    background-color: #2563eb;
-    color: white;
-    border-radius: 8px;
-    border: none;
-    width: 100%;
-    height: 3em;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-div.stButton > button:hover {
-    background-color: #1d4ed8;
-    color: white;
+div[data-testid="stMetric"] div{
+    color:#0077B6 !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # ------------------------------------------------
-# Sidebar
+# Sidebar & Logic
 # ------------------------------------------------
-
+ 
 with st.sidebar:
-
-    st.title("⚙️ Settings")
-
-    future_months = st.slider(
-        "Forecast Horizon (Months)",
-        min_value=1,
-        max_value=24,
-        value=12
-    )
-
-    st.info(
-        "Adjust the slider to choose how many months to forecast."
-    )
-
+    st.image("assets/OIP.52-e1770295315617.jpg", width=100)
+    st.title("Settings")
+    future_months = st.slider("Forecast Horizon (Months)", 1, 24, 12)
+    st.info("Adjust the slider to change the prediction window for the RNN model.")
+ 
 # ------------------------------------------------
-# Load Data
+# Data & Header
 # ------------------------------------------------
-
-loader = DataLoader("data/airline_passengers.csv")
+ 
+loader = DataLoader("data/airline-passengers.csv")
 df = loader.load_data()
-
+ 
+st.title("✈️ Airline Passenger Analysis & Forecasting")
+st.caption("Predicting global travel trends using Recurrent Neural Networks (RNN)")
+ 
 # ------------------------------------------------
-# Header
+# Metrics & Overview Tabs
 # ------------------------------------------------
-
-col1, col2 = st.columns([1, 5])
-
-with col1:
-    st.image("assets/52-e1770295315617.jpg", width=120)
-
-with col2:
-    st.title("✈️ Airline Passenger Analysis & Forecasting")
-    st.caption("Predicting future airline passenger demand using RNN, LSTM and GRU models.")
-# ------------------------------------------------
-# Tabs
-# ------------------------------------------------
-
-tab1, tab2 = st.tabs(
-    ["🚀 Model Performance", "📊 Exploratory Data Analysis"]
-)
-
-# ------------------------------------------------
-# Model Metrics
-# ------------------------------------------------
-
+ 
+tab1, tab2 = st.tabs(["🚀 Model Performance", "🔎 Exploratory Data Analysis"])
+ 
 with tab1:
-
-    st.subheader("Model Accuracy")
-
+    st.subheader("Model Accuracy Metrics")
     mae, mse, rmse = Evaluator().evaluate()
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric("MAE", f"{mae:.2f}")
-    col2.metric("MSE", f"{mse:.2f}")
-    col3.metric("RMSE", f"{rmse:.2f}")
-
-# ------------------------------------------------
-# Data Analysis
-# ------------------------------------------------
-
+   
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Mean Absolute Error (MAE)", f"{mae:.2f}", delta_color="inverse")
+    m2.metric("Mean Squared Error (MSE)", f"{mse:.2f}", delta_color="inverse")
+    m3.metric("Root Mean Squared Error (RMSE)", f"{rmse:.2f}", delta_color="inverse")
+ 
 with tab2:
-
-    left, right = st.columns([1, 2])
-
-    with left:
-        st.subheader("Dataset")
+    col_a, col_b = st.columns([1, 2])
+   
+    with col_a:
+        st.subheader("Raw Data")
         st.dataframe(df, height=350)
-
-    with right:
-        st.subheader("Historical Passenger Trend")
-
-        fig = px.line(
-            df,
-            x=df.index,
-            y="Passengers",
-            template="plotly_white"
-        )
-
-        fig.update_layout(
-            margin=dict(l=0, r=0, t=30, b=0)
-        )
-
+   
+    with col_b:
+        st.subheader("Historical Trend")
+        fig = px.line(df, x=df.index, y="Passengers",
+                      template="plotly_white",
+                      color_discrete_sequence=['#007bff'])
+        fig.update_layout(margin=dict(l=0, r=0, t=30, b=0))
         st.plotly_chart(fig, use_container_width=True)
-
+ 
 # ------------------------------------------------
-# Forecast Section
+# Forecasting Section
 # ------------------------------------------------
-
+ 
 st.markdown("---")
 st.header("🔮 Generate Future Forecast")
-
+ 
 if st.button("Run RNN Model"):
-
-    with st.spinner("Generating forecast..."):
-
+    with st.spinner("Analyzing temporal patterns..."):
         forecaster = Forecaster()
         future = forecaster.forecast(future_months)
-
+       
         last_date = df.index[-1]
-
         future_dates = pd.date_range(
             start=last_date + pd.DateOffset(months=1),
             periods=future_months,
             freq="MS"
         )
-
+ 
         forecast_df = pd.DataFrame({
             "Month": future_dates,
             "Predicted Passengers": future.flatten()
         })
-
-    st.success(f"Forecast generated for the next {future_months} months.")
-
-    col1, col2 = st.columns([1, 2])
-
-    with col1:
-
-        st.subheader("Forecast Values")
-
-        st.dataframe(
-            forecast_df,
-            use_container_width=True
-        )
-
+ 
+    st.success(f"Successfully generated forecast for {future_months} months!")
+ 
+    # Layout for Results
+    res_col1, res_col2 = st.columns([1, 2])
+ 
+    with res_col1:
+        st.subheader("Forecasted Values")
+        st.dataframe(forecast_df, use_container_width=True)
+       
         csv = forecast_df.to_csv(index=False).encode("utf-8")
-
         st.download_button(
-            label="📥 Download Forecast CSV",
+            label="📥 Download CSV",
             data=csv,
             file_name="forecast_results.csv",
             mime="text/csv"
         )
-
-    with col2:
-
-        st.subheader("Forecast Visualization")
-
-        fig = go.Figure()
-
-        fig.add_trace(
-            go.Scatter(
-                x=df.index,
-                y=df["Passengers"],
-                name="Historical",
-                line=dict(width=2)
-            )
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=forecast_df["Month"],
-                y=forecast_df["Predicted Passengers"],
-                name="Forecast",
-                line=dict(width=3, dash="dot")
-            )
-        )
-
-        fig.update_layout(
+ 
+    with res_col2:
+        st.subheader("Combined Projection")
+       
+        # Create a combined chart with Plotly
+        fig_combined = go.Figure()
+       
+        # Historical Data
+        fig_combined.add_trace(go.Scatter(
+            x=df.index, y=df["Passengers"],
+            name="Historical", line=dict(color="#6c757d", width=2)
+        ))
+       
+        # Forecasted Data
+        fig_combined.add_trace(go.Scatter(
+            x=forecast_df["Month"], y=forecast_df["Predicted Passengers"],
+            name="Forecast", line=dict(color="#ff7f0e", width=3, dash='dot')
+        ))
+       
+        fig_combined.update_layout(
             template="plotly_white",
             hovermode="x unified",
             margin=dict(l=0, r=0, t=30, b=0),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                x=1
-            )
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
-
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_combined, use_container_width=True)
