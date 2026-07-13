@@ -55,7 +55,7 @@ with st.sidebar:
 # Data & Header
 # ------------------------------------------------
  
-loader = DataLoader("data/airline-passengers.csv")
+loader = DataLoader("data/airline_passengers.csv")
 df = loader.load_data()
  
 st.title("✈️ Airline Passenger Analysis & Forecasting")
