@@ -46,7 +46,7 @@ div[data-testid="stMetric"] div{
 # ------------------------------------------------
  
 with st.sidebar:
-    st.image("assets/OIP.52-e1770295315617.jpg", width=100)
+    st.image("assets/52-e1770295315617.jpg", width=100)
     st.title("Settings")
     future_months = st.slider("Forecast Horizon (Months)", 1, 24, 12)
     st.info("Adjust the slider to change the prediction window for the RNN model.")
